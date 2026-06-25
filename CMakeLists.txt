@@ -28,13 +28,19 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
 find_package(fmt REQUIRED)
+find_package(spdlog REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(OpenCL REQUIRED)
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Multimedia Network Widgets Xml)
 find_package(xdaq REQUIRED)
 
-
-
+include(FetchContent)
+FetchContent_Declare(
+    cpptrace
+    GIT_REPOSITORY https://github.com/jeremy-rifkin/cpptrace.git
+    GIT_TAG v1.0.4
+)
+FetchContent_MakeAvailable(cpptrace)
 
 # Build
 add_subdirectory(Engine)
@@ -109,7 +115,9 @@ target_link_libraries(XDAQ-RHX PRIVATE
     OpenCL::OpenCL
     nlohmann_json::nlohmann_json
     fmt::fmt
+    spdlog::spdlog
     xdaq::xdaq_device
+    cpptrace::cpptrace
 )
 
 # Install

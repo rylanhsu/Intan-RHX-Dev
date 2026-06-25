@@ -10,3 +10,9 @@
 /.venv
 /.cache
 /CMakeUserPresets.json
+
+# Packages
+kontex-conan/
+
+# Logs
+rhx_trace.log
