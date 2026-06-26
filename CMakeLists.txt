@@ -40,6 +40,7 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/jeremy-rifkin/cpptrace.git
     GIT_TAG v1.0.4
 )
+set(CPPTRACE_UNWIND_WITH_FRAME_POINTER ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(cpptrace)
 
 # Build
@@ -90,6 +91,7 @@ target_include_directories(XDAQ-RHX PRIVATE
 
 target_compile_features(XDAQ-RHX PRIVATE cxx_std_23)
 target_compile_options(XDAQ-RHX PRIVATE $<$<CXX_COMPILER_ID:Clang,GNU>:-Wno-deprecated>)
+target_compile_options(XDAQ-RHX PRIVATE -fno-omit-frame-pointer)
 target_compile_definitions(XDAQ-RHX
     PUBLIC
         $<$<CONFIG:Debug>:DEBUG>
