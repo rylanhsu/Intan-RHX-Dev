@@ -40,9 +40,14 @@ void safe_crash_handler(int signum, siginfo_t *info, void *ctx) {
     // the crash PC/LR saved in the ucontext so we at least know where it died.
     if (count == 0 && ctx != nullptr) {
         ucontext_t* uc = static_cast<ucontext_t*>(ctx);
+#if defined(__aarch64__)
         addrs[0] = reinterpret_cast<void*>(uc->uc_mcontext->__ss.__pc);
         addrs[1] = reinterpret_cast<void*>(uc->uc_mcontext->__ss.__lr);
         count = 2;
+#elif defined(__x86_64__)
+        addrs[0] = reinterpret_cast<void*>(uc->uc_mcontext->__ss.__rip);
+        count = 1;
+#endif
     }
 
     // Prepend the main exe's ASLR slide so the reader can map these runtime
