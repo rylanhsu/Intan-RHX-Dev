@@ -14,8 +14,8 @@ jobs:
         os_arch:
           [
             { os: windows-2022, arch: x64 },
-            { os: macos-15, arch: arm64 },
-            { os: macos-15, arch: x64 }
+            #{ os: macos-15, arch: arm64 },
+            #{ os: macos-15, arch: x64 }
           ]
 
     runs-on: ${{ matrix.os_arch.os }}
