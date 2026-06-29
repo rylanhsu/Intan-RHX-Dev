@@ -35,9 +35,6 @@
 #include <qsettings.h>
 #include <xdaq/device_manager.h>
 
-#include <signal.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <fstream>
 #include <filesystem>
 #include <cpptrace/cpptrace.hpp>
@@ -57,7 +54,7 @@
 #include "rhxglobals.h"
 #include "systemstate.h"
 
-#include "signalhandler.hpp"
+#include "signalhandler_windows.hpp"
 
 using json = nlohmann::json;
 
@@ -288,7 +285,8 @@ int main(int argc, char *argv[])
     std::cout << "System Initialization Complete. Starting Application..." << std::endl;
     std::cout << "Prepare to do dangerous operations: Infinite loop(Trigger Stack Overflow)...\n";
 
-    infinite_recursion(); // This is a placeholder for the actual dangerous operation that may cause a crash:w
+    //generate_crash();
+    //infinite_recursion(); // This is a placeholder for the actual dangerous operation that may cause a crash:w
 
     QApplication app(argc, argv);
     // Information used by QSettings to save basic settings across sessions.

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 
-project(XDAQ-RHX VERSION 1.4.3 LANGUAGES CXX)
+project(XDAQ-RHX-Debug VERSION 1.4.3 LANGUAGES CXX)
 
 if(MSVC)
     add_compile_definitions(NOMINMAX)
@@ -91,7 +91,17 @@ target_include_directories(XDAQ-RHX PRIVATE
 
 target_compile_features(XDAQ-RHX PRIVATE cxx_std_23)
 target_compile_options(XDAQ-RHX PRIVATE $<$<CXX_COMPILER_ID:Clang,GNU>:-Wno-deprecated>)
-target_compile_options(XDAQ-RHX PRIVATE -fno-omit-frame-pointer)
+target_compile_options(XDAQ-RHX PRIVATE $<$<CXX_COMPILER_ID:Clang,GNU>:-fno-omit-frame-pointer>)
+if(MSVC)
+    # /EHsc: enable C++ exception unwinding so std::set_terminate fires for unhandled throws
+    target_compile_options(XDAQ-RHX PRIVATE /EHsc)
+    # /Zi: emit debug info into a PDB; /FS: serialize PDB writes (required for parallel Ninja builds)
+    target_compile_options(XDAQ-RHX PRIVATE $<$<CONFIG:Debug>:/Zi /FS>)
+    # /DEBUG: produce a PDB for the linked binary; place it next to the exe
+    target_link_options(XDAQ-RHX PRIVATE
+        $<$<CONFIG:Debug>:/DEBUG /PDB:$<TARGET_FILE_DIR:XDAQ-RHX>/XDAQ-RHX.pdb>
+    )
+endif()
 target_compile_definitions(XDAQ-RHX
     PUBLIC
         $<$<CONFIG:Debug>:DEBUG>
@@ -199,3 +209,6 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
 endif()
 
 include(CPack)
+set(CPACK_GENERATORS "NSIS")
+set(CPACK_PACKAGE_NAME "XDAQ-RHX-Debug")
+set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
