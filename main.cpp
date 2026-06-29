@@ -54,7 +54,11 @@
 #include "rhxglobals.h"
 #include "systemstate.h"
 
+#ifdef _WIN32
 #include "signalhandler_windows.hpp"
+#else
+#include "signalhandler.hpp"
+#endif
 
 using json = nlohmann::json;
 
