@@ -6,6 +6,9 @@ project(XDAQ-RHX-Debug VERSION 1.4.3 LANGUAGES CXX)
 if(MSVC)
     add_compile_definitions(NOMINMAX)
     add_compile_definitions(__PRETTY_FUNCTION__=__FUNCSIG__)
+
+    add_compile_options(/Zi)
+    add_link_options(/DEBUG /OPT:REF /OPT:ICF)
 elseif(
     CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" OR
     (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
@@ -33,6 +36,7 @@ find_package(nlohmann_json REQUIRED)
 find_package(OpenCL REQUIRED)
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Multimedia Network Widgets Xml)
 find_package(xdaq REQUIRED)
+find_package(crashpad REQUIRED)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -130,6 +134,7 @@ target_link_libraries(XDAQ-RHX PRIVATE
     spdlog::spdlog
     xdaq::xdaq_device
     cpptrace::cpptrace
+    crashpad::crashpad
 )
 
 # Install
@@ -147,6 +152,23 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     )
 
     deployqt($<TARGET_FILE_NAME:XDAQ-RHX>)
+
+    # Dev convenience: mirror xdaq_install_core/xdaq_install_device_managers next to
+    # the raw build output, so XDAQ-RHX.exe can run straight out of the build
+    # directory without a full `cmake --install` step.
+    file(GLOB XDAQ_CORE_DLLS "${XDAQ_ROOT_DIR}/bin/*.dll")
+    file(GLOB XDAQ_MANAGER_DLLS "${XDAQ_DEVICE_MANAGER_DIR}/*.dll")
+    add_custom_command(TARGET XDAQ-RHX POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory
+            "$<TARGET_FILE_DIR:XDAQ-RHX>/managers"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${XDAQ_CORE_DLLS} "$<TARGET_FILE_DIR:XDAQ-RHX>"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${XDAQ_MANAGER_DLLS} "$<TARGET_FILE_DIR:XDAQ-RHX>/managers"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${XDAQ_ROOT_DIR}/lib/xdaq/resources" "$<TARGET_FILE_DIR:XDAQ-RHX>/resources"
+        COMMENT "Copying xdaq runtime DLLs next to XDAQ-RHX.exe for local dev runs"
+    )
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     install(TARGETS XDAQ-RHX DESTINATION .)
     set_target_properties(XDAQ-RHX PROPERTIES 

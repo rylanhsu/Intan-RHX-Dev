@@ -33,15 +33,14 @@
 #include <qdebug.h>
 #include <qglobal.h>
 #include <qsettings.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/spdlog.h>
 #include <xdaq/device_manager.h>
 
-#include <fstream>
-#include <filesystem>
-#include <cpptrace/cpptrace.hpp>
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/basic_file_sink.h>
-
 #include <QApplication>
+#include <cpptrace/cpptrace.hpp>
+#include <filesystem>
+#include <fstream>
 #include <memory>
 #include <nlohmann/json.hpp>
 
@@ -54,11 +53,7 @@
 #include "rhxglobals.h"
 #include "systemstate.h"
 
-#ifdef _WIN32
-#include "signalhandler_windows.hpp"
-#else
-#include "signalhandler.hpp"
-#endif
+#include "google_crashpad.hpp"
 
 using json = nlohmann::json;
 
@@ -279,18 +274,7 @@ auto startSoftware(
 
 int main(int argc, char *argv[])
 {
-    cpptrace::generate_trace(); // Generate a trace at the start of the program
-
-    check_and_print_previous_crash(); // Check for previous crash dump and print it
-
-    setup_alternate_stack(); // Set up an alternate stack for signal handling
-    register_crash_signals(); // Register signal handlers for crashes
-
-    std::cout << "System Initialization Complete. Starting Application..." << std::endl;
-    std::cout << "Prepare to do dangerous operations: Infinite loop(Trigger Stack Overflow)...\n";
-
-    //generate_crash();
-    //infinite_recursion(); // This is a placeholder for the actual dangerous operation that may cause a crash:w
+    InitializeCrashpad();
 
     QApplication app(argc, argv);
     // Information used by QSettings to save basic settings across sessions.
@@ -349,25 +333,6 @@ int main(int argc, char *argv[])
         }
     );
     boardSelectDialog.show();
-
-    auto trace = cpptrace::generate_trace();
-    std::string trace_string = trace.to_string();
-
-    auto file_logger = spdlog::basic_logger_mt("file_logger", "rhx_trace.log");
-    file_logger->info("Generated trace: {}", trace_string);
-    file_logger->flush();
-    // spdlog::error("Generated trace: {}", trace_string);
-
-    cpptrace::object_trace trace_obj = cpptrace::object_trace::current();
-    
-    file_logger->info("Crash Report - Object Trace Data:");
-    for (const auto& frame : trace_obj.frames) {
-        file_logger->info("Object: {} | Raw Address: 0x{:x} | Object Address: 0x{:x}",
-                          frame.object_path,
-                          frame.raw_address,
-                          frame.object_address);
-    }
-    file_logger->flush();
 
     auto res = app.exec();
     rhx_app.reset();
