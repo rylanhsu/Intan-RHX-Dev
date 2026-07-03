@@ -28,9 +28,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Compiler (Windows)
-        uses: ilammy/msvc-dev-cmd@v1
-
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
@@ -47,9 +44,20 @@ jobs:
           git clone https://github.com/kontex-neuro/kontex-conan.git kontex-conan
           conan remote add --force kontex-neuro ./kontex-conan
 
-      - name: Build XDAQ-RHX
+      # Build dependencies BEFORE activating the MSVC dev environment.
+      # Conan activates its own vcvars (conanvcvars.bat) per package; if
+      # msvc-dev-cmd has already initialized the shell for amd64, crashpad's
+      # GN build fails when its win_helper.py re-runs vcvarsall.bat for x86
+      # inside the already-initialized environment (exit code 255).
+      - name: Install dependencies (Conan)
         run: |
           conan install . --build=missing --profile:all ${{ env.OS_ARCH }} -s build_type=${{ env.BUILD_TYPE }}
+
+      - name: Setup Compiler (Windows)
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Build XDAQ-RHX
+        run: |
           cmake -S . -B build/${{ env.BUILD_TYPE }} --preset conan-relwithdebinfo
           cmake --build build/${{ env.BUILD_TYPE }} --preset conan-relwithdebinfo
 
