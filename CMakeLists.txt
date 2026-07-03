@@ -151,6 +151,14 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
         DESTINATION .
     )
 
+    # Ship the PDB so cpptrace can resolve symbols on the target machine.
+    # /DEBUG is set unconditionally above, so a PDB exists in every config.
+    install(FILES $<TARGET_PDB_FILE:XDAQ-RHX> DESTINATION .)
+
+    # crashpad_handler.exe is copied into the build dir by conanfile.py generate();
+    # StartHandler() launches it at runtime, so it must ship next to XDAQ-RHX.exe.
+    install(PROGRAMS ${CMAKE_BINARY_DIR}/crashpad_handler.exe DESTINATION .)
+
     deployqt($<TARGET_FILE_NAME:XDAQ-RHX>)
 
     # Dev convenience: mirror xdaq_install_core/xdaq_install_device_managers next to

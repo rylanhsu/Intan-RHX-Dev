@@ -1,7 +1,22 @@
+#include <windows.h>
+
+#include <filesystem>
+
 #include "client/crash_report_database.h"
 #include "client/crashpad_client.h"
 #include "client/settings.h"
 
+
+// Directory containing XDAQ-RHX.exe. The handler must be located relative to
+// the executable, not the current working directory, which differs depending
+// on how the app is launched (shortcut, Explorer, command line).
+inline std::filesystem::path get_executable_dir()
+{
+    wchar_t buf[MAX_PATH];
+    const DWORD len = GetModuleFileNameW(nullptr, buf, MAX_PATH);
+    if (len == 0 || len >= MAX_PATH) return std::filesystem::current_path();
+    return std::filesystem::path(buf).parent_path();
+}
 
 inline std::filesystem::path get_app_data_dir()
 {
@@ -15,7 +30,7 @@ inline std::filesystem::path get_app_data_dir()
 }
 void InitializeCrashpad()
 {
-    base::FilePath handler_path(L"crashpad_handler.exe");
+    base::FilePath handler_path((get_executable_dir() / L"crashpad_handler.exe").wstring());
 
     base::FilePath db_path(get_app_data_dir() / "CrashDB");
 

@@ -338,6 +338,8 @@ ControlWindow::ControlWindow(SystemState* state_, CommandParser* parser_, Contro
     }
 
     updateMenus();
+
+    //throw std::runtime_error("This is an unhandled exception for testing purposes.");
 }
 
 ControlWindow::~ControlWindow()
