@@ -1,0 +1,68 @@
+name: Build Installer (RelWithDebInfo)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'debug/**'
+
+jobs:
+  build:
+    runs-on: windows-2022
+
+    env:
+      OS_ARCH: windows-2022-x64
+      BUILD_TYPE: RelWithDebInfo
+
+    steps:
+      - name: Install build system
+        run: pip install conan ninja
+
+      - name: conan cache
+        id: conan_cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.conan2
+          key: ${{ env.OS_ARCH }}-${{ env.BUILD_TYPE }}-conan
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Compiler (Windows)
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.10.2'
+          modules: 'qtmultimedia'
+          cache: true
+
+      - name: Conan setup
+        run: |
+          conan config install .github/conan_profiles/${{ env.OS_ARCH }} -tf profiles
+
+      - name: Install libxdaq
+        run: |
+          git clone https://github.com/kontex-neuro/kontex-conan.git kontex-conan
+          conan remote add --force kontex-neuro ./kontex-conan
+
+      - name: Build XDAQ-RHX
+        run: |
+          conan install . --build=missing --profile:all ${{ env.OS_ARCH }} -s build_type=${{ env.BUILD_TYPE }}
+          cmake -S . -B build/${{ env.BUILD_TYPE }} --preset conan-relwithdebinfo
+          cmake --build build/${{ env.BUILD_TYPE }} --preset conan-relwithdebinfo
+
+      - name: Package XDAQ-RHX
+        run: cmake --build build/${{ env.BUILD_TYPE }} --target package
+
+      - name: Tar binaries to keep file permissions
+        shell: bash
+        run: |
+          tar -cvf build/package.tar -C build/${{ env.BUILD_TYPE }}/package $(ls build/${{ env.BUILD_TYPE }}/package | grep XDAQ-RHX)
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.OS_ARCH }}-relwithdebinfo
+          path: build/package.tar
