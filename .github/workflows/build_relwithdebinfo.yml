@@ -51,9 +51,12 @@ jobs:
       # inside the already-initialized environment (exit code 255).
       # crashpad (2022-era Chromium code) does not compile as C++23/latest with
       # MSVC 19.4x, so pin that one package to C++17.
+      # libxdaq only publishes prebuilt Release/Debug zips on the CDN (no
+      # RelWithDebInfo), so consume its Release binary; the runtime (/MD) is
+      # identical so it links cleanly into the RelWithDebInfo app.
       - name: Install dependencies (Conan)
         run: |
-          conan install . --build=missing --profile:all ${{ env.OS_ARCH }} -s build_type=${{ env.BUILD_TYPE }} -s "crashpad/*:compiler.cppstd=17"
+          conan install . --build=missing --profile:all ${{ env.OS_ARCH }} -s build_type=${{ env.BUILD_TYPE }} -s "crashpad/*:compiler.cppstd=17" -s "libxdaq/*:build_type=Release"
 
       - name: Setup Compiler (Windows)
         uses: ilammy/msvc-dev-cmd@v1

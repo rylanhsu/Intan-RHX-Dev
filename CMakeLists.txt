@@ -24,6 +24,11 @@ SET(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH}
 )
 
+# Some dependencies (libxdaq) ship prebuilt Release-only binaries. When
+# building RelWithDebInfo, let imported targets fall back to their Release
+# config instead of resolving to empty flags/libraries.
+set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO "RelWithDebInfo;Release")
+
 
 # Compiler flags and dependencies
 
