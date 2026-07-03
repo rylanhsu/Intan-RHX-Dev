@@ -26,8 +26,11 @@ SET(CMAKE_MODULE_PATH
 
 # Some dependencies (libxdaq) ship prebuilt Release-only binaries. When
 # building RelWithDebInfo, let imported targets fall back to their Release
-# config instead of resolving to empty flags/libraries.
-set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO "RelWithDebInfo;Release")
+# config instead of resolving to empty flags/libraries. The trailing empty
+# element keeps config-less imported targets (e.g. OpenCL::OpenCL from
+# cmake/FindOpenCL.cmake) resolvable — once a map is set, CMake no longer
+# falls back to un-suffixed IMPORTED_LOCATION unless "" is in the list.
+set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO "RelWithDebInfo;Release;")
 
 
 # Compiler flags and dependencies
